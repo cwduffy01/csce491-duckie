@@ -35,9 +35,9 @@ class Localizer:
 
         rospy.Subscriber("/aarrgnano/left_wheel_encoder_node/tick", WheelEncoderStamped, self.left_callback)
         rospy.Subscriber("/aarrgnano/right_wheel_encoder_node/tick", WheelEncoderStamped, self.right_callback)
-        rospy.Subscriber("/aarrgnano/wheels_driver_node/wheels_cmd_executed", WheelsCmdStamped, self.command_callback)
-        rospy.Subscriber("/left_dir", Int16, self.left_dir_callback)
-        rospy.Subscriber("/right_dir", Int16, self.right_dir_callback)
+        # rospy.Subscriber("/aarrgnano/wheels_driver_node/wheels_cmd_executed", WheelsCmdStamped, self.command_callback)
+        # rospy.Subscriber("/left_dir", Int16, self.left_dir_callback)
+        # rospy.Subscriber("/right_dir", Int16, self.right_dir_callback)
         rospy.Subscriber("/set_pose", Pose2D, self.set_pose)
 
         self.pose_pub = rospy.Publisher("/duckie_pose", Pose2D, queue_size=10)
@@ -106,22 +106,22 @@ class Localizer:
         # self.pose_update(delta_time)
 
 
-    def command_callback(self, msg):
-        if (msg.vel_left < 0):
-            self.vl_dir = -1
-        else:
-            self.vl_dir = 1
+    # def command_callback(self, msg):
+    #     if (msg.vel_left < 0):
+    #         self.vl_dir = -1
+    #     else:
+    #         self.vl_dir = 1
 
-        if (msg.vel_right < 0):
-            self.vr_dir = -1
-        else:
-            self.vr_dir = 1
+    #     if (msg.vel_right < 0):
+    #         self.vr_dir = -1
+    #     else:
+    #         self.vr_dir = 1
 
-    def left_dir_callback(self, msg):
-        self.vl_dir = msg.data
+    # def left_dir_callback(self, msg):
+    #     self.vl_dir = msg.data
 
-    def right_dir_callback(self, msg):
-        self.vr_dir = msg.data
+    # def right_dir_callback(self, msg):
+    #     self.vr_dir = msg.data
 
 
     def pose_update(self, delta_t):
