@@ -19,6 +19,9 @@ class PatternDriver():
 
         self.test_sleep = 3
 
+        self.sleep = True
+        self.sleep_t = 1
+
         self.pub = rospy.Publisher("/cmd_vel", Twist, queue_size=100)
         self.reset_pub = rospy.Publisher("/set_pose", Pose2D, queue_size=1)
         rospy.Subscriber("/duckie_pose", Pose2D, self.callback)
@@ -50,54 +53,70 @@ class PatternDriver():
         msg.angular.z = 0
         self.pub.publish(msg)
 
-    def move(self, distance, lin_vel = 0.5, sleep = True, sleep_t = 1):
-        start_x = self.posx
-        start_y = self.posy
+    def move(self, distance, lin_vel = 0.5, ang_vel = 0.0):
+        total_dist = 0.0
+        last_posx = self.posx
+        last_posy = self.posy
 
         msg = Twist()
         msg.linear.x = lin_vel * (abs(distance) / distance)
+        msg.angular.z = ang_vel
         self.pub.publish(msg)
 
-        while (((self.posx - start_x)**2 + (self.posy - start_y)**2)**0.5 < abs(distance)) and not rospy.is_shutdown():
+        while (total_dist < abs(distance)) and not rospy.is_shutdown():
+            dx = ((self.posx - last_posx)**2 + (self.posy - last_posy)**2)**0.5
+            total_dist += dx
+            last_posx = self.posx
+            last_posy = self.posy
             # print("distance: " + str(((self.posx - start_x)**2 + (self.posy - start_y)**2)**0.5))
-            rospy.sleep(0.1)
+            rospy.sleep(0.01)
 
         msg.linear.x = 0.0
+        msg.angular.z = 0.0
         self.pub.publish(msg)
 
-        if sleep:
-            self.check_sleep(sleep_t)
+        if self.sleep:
+            self.check_sleep(self.sleep_t)
 
-    def set_theta(self, angle, ang_vel = 0.5, lin_vel = 0.0, sleep = True, sleep_t = 1):
+    def set_theta(self, angle, ang_vel = 0.75, lin_vel = 0.0, sleep = True, sleep_t = 1):
         msg = Twist()
 
         start_angle = self.theta
         angle_diff = angle - start_angle    
         # print(angle_diff)
-        msg.angular.z = ang_vel * (abs(angle_diff) / angle_diff)
+        direction = (abs(angle_diff) / angle_diff)
         angle_diff = abs(angle_diff)
+
+
+        msg.angular.z = ang_vel * direction
 
         self.pub.publish(msg)
         while (abs(angle - self.theta) <= angle_diff) and not rospy.is_shutdown():
             # print("theta: " + str(self.theta))
-            angle_diff = abs(abs(angle - self.theta))
-            rospy.sleep(0.1)
+
+            # msg.angular.z = ang_vel * abs(angle - self.theta) * direction
+            # 1 - ()
+            # self.pub.publish(msg)
+            angle_diff = abs(angle - self.theta)
+            rospy.sleep(0.01)
 
         msg.angular.z = 0.0
         self.pub.publish(msg)
 
-        if sleep:
-            self.check_sleep(sleep_t)
+        if self.sleep:
+            self.check_sleep(self.sleep_t)
 
 
     def drive_square(self, side_length = 0.5):
-        pd.move(side_length)
+        # adjust_w = 
+        adjust_w = 0.5
+        pd.move(side_length, ang_vel=0.5)
         pd.set_theta(pi/2)
-        pd.move(side_length)
+        pd.move(side_length, ang_vel=0.4)
         pd.set_theta(pi)
-        pd.move(side_length)
+        pd.move(side_length, ang_vel=-0.2)
         pd.set_theta(3 * pi / 2)
-        pd.move(side_length)
+        pd.move(side_length, ang_vel=-0.2)
         pd.set_theta(2 * pi)
     
     def check_sleep(self, duration):
@@ -108,6 +127,14 @@ if __name__ == "__main__":
     pd = PatternDriver()
 
     pd.drive_square()
+
+    # pd.move(0.5, ang_vel=0.9)
+    # pd.set_theta(pi)
+
+    pd.stop()
+    # pd.set_theta(2 * pi, ang_vel=vel)
+    # pd.set_theta(0, ang_vel=vel)
+    
 
     # ang_vel >= 0.5
     # lin_vel >= 0.1
