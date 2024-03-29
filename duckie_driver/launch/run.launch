@@ -1,0 +1,11 @@
+<launch>
+
+  <group ns="duckie_localizer">
+    <node pkg="duckie_localizer" name="duckie_localizer" type="localizer_node.py"/>
+  </group>
+
+  <group ns="duckie_driver">
+    <node pkg="duckie_driver" name="duckie_driver" type="driver_node.py"/>
+  </group>
+
+</launch>
