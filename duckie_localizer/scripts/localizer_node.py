@@ -5,12 +5,12 @@ import numpy as np
 from duckietown_msgs.msg import WheelEncoderStamped, WheelsCmdStamped
 # from duckie_localizer.srv import ResetPose
 from geometry_msgs.msg import Pose2D
-from std_msgs.msg import Int16
+from std_msgs.msg import Float32
 
 class Localizer:
     ticks_per_rev = 137.0
     wheel_diam = .066
-    wheel_space = .098
+    wheel_space = 80e-3
 
     right_enc = None
     left_enc = None
@@ -25,8 +25,8 @@ class Localizer:
     vr = 0
     vl = 0
 
-    vr_dir = 1
-    vl_dir = 1
+    # vr_dir = 1
+    # vl_dir = 1
 
     last_time = 0
 
@@ -41,6 +41,8 @@ class Localizer:
         rospy.Subscriber("/set_pose", Pose2D, self.set_pose)
 
         self.pose_pub = rospy.Publisher("/duckie_pose", Pose2D, queue_size=10)
+        self.left_vel_pub = rospy.Publisher("/enc_left_vel", Float32, queue_size=10)
+        self.right_vel_pub = rospy.Publisher("/enc_right_vel", Float32, queue_size=10)
 
         # s = rospy.Service('reset_pose', ResetPose, self.reset_pose)
 
@@ -75,12 +77,16 @@ class Localizer:
 
         self.vl = dist / delta_time
 
+        self.left_vel_pub.publish(self.vl)
+
         # if msg.data != self.left_enc:
         #     rospy.loginfo("{:s}: {:.10f}".format("left", self.vl))
 
         self.left_enc = msg.data
 
         # self.pose_update(delta_time)
+
+
 
 
     def right_callback(self, msg):
@@ -97,6 +103,8 @@ class Localizer:
         dist = (delta_ticks / self.ticks_per_rev) * (pi * self.wheel_diam)
 
         self.vr = dist / delta_time
+
+        self.right_vel_pub.publish(self.vr)
 
         # if msg.data != self.right_enc:
         #     rospy.loginfo("{:s}: {:.10f}".format("right", self.vr))
