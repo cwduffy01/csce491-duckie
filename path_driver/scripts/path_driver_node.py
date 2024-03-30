@@ -1,16 +1,9 @@
+#!/usr/bin/env python
 import rospy
 from geometry_msgs.msg import Twist, Pose2D
 from math import *
 
-class Point():
-    x = 0.0
-    y = 0.0
-
-    def __init__(self, px, py):
-        self.x = px
-        self.y = py
-
-class PatternDriver():
+class PathDriver():
 
     def __init__(self):
         self.posx = 0
@@ -110,34 +103,47 @@ class PatternDriver():
     def drive_square(self, side_length = 0.5):
         # adjust_w = 
         adjust_w = 0.5
-        ang_vel = 0.75
-        pd.move(side_length, ang_vel=0.5)
-        pd.set_theta(pi/2, ang_vel)
-        pd.move(side_length, ang_vel=-0.2)
-        pd.set_theta(pi, ang_vel)
-        pd.move(side_length, ang_vel=-0.5)
-        pd.set_theta(3 * pi / 2, ang_vel)
+        pd.set_theta(-pi/2)
+        pd.move(side_length/2, ang_vel=0.0)
+        pd.set_theta(0)
+
         pd.move(side_length, ang_vel=0.0)
-        pd.set_theta(0, ang_vel)
+        pd.set_theta(pi/2)
+        pd.move(side_length, ang_vel=0.0)
+        pd.set_theta(pi)
+        pd.move(side_length, ang_vel=0.0)
+
+        pd.set_theta(3 * pi / 2)
+        pd.move(side_length/2, ang_vel=0.0)
+        pd.set_theta(2 * pi)
+
+    def drive_circle(self, vel = 0.5, radius = 0.25):
+        # adjust_w = 
+        adjust_w = 0.5
+        pd.set_theta(-pi/2)
+
+        ang_vel = radius * vel
+
+        pd.move(2 * pi * radius, lin_vel=vel, ang_vel=ang_vel)
+
+        pd.set_theta(2 * pi)
     
     def check_sleep(self, duration):
         if not rospy.is_shutdown():
             rospy.sleep(duration)
 
 if __name__ == "__main__":
-    pd = PatternDriver()
+    pd = PathDriver()
 
-    pd.drive_circle()
+    # pd.set_theta(pi / 2)
+    
+    # pd.move(3, ang_vel=1.0)
 
-    # pd.move(0.5, ang_vel=0.9)
-    # pd.set_theta(pi)
+    msg = Twist()
+    msg.linear.x = 0.5
+    msg.angular.z = 5.0
+    pd.pub.publish(msg)
+
+    pd.check_sleep(10)
 
     pd.stop()
-    # pd.set_theta(2 * pi, ang_vel=vel)
-    # pd.set_theta(0, ang_vel=vel)
-    
-
-    # ang_vel >= 0.5
-    # lin_vel >= 0.1
-
-
