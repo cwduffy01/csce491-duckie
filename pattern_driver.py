@@ -36,8 +36,6 @@ class PatternDriver():
         self.reset_pub.publish(msg)
         rospy.sleep(1)
 
-        # rospy.spin()
-
     def callback(self, msg):
         self.posx = msg.x
         self.posy = msg.y
@@ -68,7 +66,6 @@ class PatternDriver():
             total_dist += dx
             last_posx = self.posx
             last_posy = self.posy
-            # print("distance: " + str(((self.posx - start_x)**2 + (self.posy - start_y)**2)**0.5))
             rospy.sleep(0.01)
 
         msg.linear.x = 0.0
@@ -82,8 +79,7 @@ class PatternDriver():
         msg = Twist()
 
         start_angle = self.theta
-        angle_diff = angle - start_angle    
-        # print(angle_diff)
+        angle_diff = angle - start_angle 
         direction = (abs(angle_diff) / angle_diff)
         angle_diff = abs(angle_diff)
 
@@ -92,11 +88,6 @@ class PatternDriver():
 
         self.pub.publish(msg)
         while (abs(angle - self.theta) <= angle_diff) and not rospy.is_shutdown():
-            # print("theta: " + str(self.theta))
-
-            # msg.angular.z = ang_vel * abs(angle - self.theta) * direction
-            # 1 - ()
-            # self.pub.publish(msg)
             angle_diff = abs(angle - self.theta)
             rospy.sleep(0.01)
 
@@ -108,7 +99,6 @@ class PatternDriver():
 
 
     def drive_square(self, side_length = 0.5):
-        # adjust_w = 
         adjust_w = 0.5
         ang_vel = 0.75
         pd.move(side_length, ang_vel=0.5)
@@ -127,17 +117,6 @@ class PatternDriver():
 if __name__ == "__main__":
     pd = PatternDriver()
 
-    pd.drive_circle()
-
-    # pd.move(0.5, ang_vel=0.9)
-    # pd.set_theta(pi)
-
     pd.stop()
-    # pd.set_theta(2 * pi, ang_vel=vel)
-    # pd.set_theta(0, ang_vel=vel)
-    
-
-    # ang_vel >= 0.5
-    # lin_vel >= 0.1
 
 

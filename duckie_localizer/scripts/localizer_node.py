@@ -3,7 +3,6 @@ import rospy
 from math import *
 import numpy as np
 from duckietown_msgs.msg import WheelEncoderStamped, WheelsCmdStamped
-# from duckie_localizer.srv import ResetPose
 from geometry_msgs.msg import Pose2D
 from std_msgs.msg import Float32
 
@@ -25,9 +24,6 @@ class Localizer:
     vr = 0
     vl = 0
 
-    # vr_dir = 1
-    # vl_dir = 1
-
     last_time = 0
 
     def __init__(self):
@@ -35,20 +31,16 @@ class Localizer:
 
         rospy.Subscriber("/aarrgnano/left_wheel_encoder_node/tick", WheelEncoderStamped, self.left_callback)
         rospy.Subscriber("/aarrgnano/right_wheel_encoder_node/tick", WheelEncoderStamped, self.right_callback)
-        # rospy.Subscriber("/aarrgnano/wheels_driver_node/wheels_cmd_executed", WheelsCmdStamped, self.command_callback)
-        # rospy.Subscriber("/left_dir", Int16, self.left_dir_callback)
-        # rospy.Subscriber("/right_dir", Int16, self.right_dir_callback)
-        rospy.Subscriber("/set_pose", Pose2D, self.set_pose)
+        rospy.Subscriber("/set_pose", Pose2D, self.set_pose)    # used to reset the pose of the bot during testing
 
         self.pose_pub = rospy.Publisher("/duckie_pose", Pose2D, queue_size=10)
         self.left_vel_pub = rospy.Publisher("/enc_left_vel", Float32, queue_size=10)
         self.right_vel_pub = rospy.Publisher("/enc_right_vel", Float32, queue_size=10)
 
-        # s = rospy.Service('reset_pose', ResetPose, self.reset_pose)
-
         self.left_last_time = float(rospy.get_rostime().to_nsec())
         self.right_last_time = float(rospy.get_rostime().to_nsec())
 
+        # update pose every 1/100 seconds
         rate = rospy.Rate(100)
         t0 = rospy.get_time()
         while not rospy.is_shutdown():
@@ -62,6 +54,7 @@ class Localizer:
         self.posy = msg.y
         self.theta = msg.theta
 
+    # callbacks for each wheel
     def left_callback(self, msg):
         if self.left_enc is None:
             self.left_enc = msg.data
@@ -72,22 +65,11 @@ class Localizer:
         self.left_last_time = now
 
         delta_ticks = msg.data - self.left_enc
-        # dist = (delta_ticks / self.ticks_per_rev) * (pi * self.wheel_diam) * self.vl_dir
         dist = (delta_ticks / self.ticks_per_rev) * (pi * self.wheel_diam)
 
         self.vl = dist / delta_time
-
         self.left_vel_pub.publish(self.vl)
-
-        # if msg.data != self.left_enc:
-        #     rospy.loginfo("{:s}: {:.10f}".format("left", self.vl))
-
         self.left_enc = msg.data
-
-        # self.pose_update(delta_time)
-
-
-
 
     def right_callback(self, msg):
         if self.right_enc is None:
@@ -99,43 +81,15 @@ class Localizer:
         self.right_last_time = now
 
         delta_ticks = msg.data - self.right_enc
-        # dist = (delta_ticks / self.ticks_per_rev) * (pi * self.wheel_diam) * self.vr_dir
         dist = (delta_ticks / self.ticks_per_rev) * (pi * self.wheel_diam)
 
         self.vr = dist / delta_time
-
         self.right_vel_pub.publish(self.vr)
-
-        # if msg.data != self.right_enc:
-        #     rospy.loginfo("{:s}: {:.10f}".format("right", self.vr))
-
         self.right_enc = msg.data
 
-        # self.pose_update(delta_time)
-
-
-    # def command_callback(self, msg):
-    #     if (msg.vel_left < 0):
-    #         self.vl_dir = -1
-    #     else:
-    #         self.vl_dir = 1
-
-    #     if (msg.vel_right < 0):
-    #         self.vr_dir = -1
-    #     else:
-    #         self.vr_dir = 1
-
-    # def left_dir_callback(self, msg):
-    #     self.vl_dir = msg.data
-
-    # def right_dir_callback(self, msg):
-    #     self.vr_dir = msg.data
-
-
+    # use differential drive equations to predict pose. 
     def pose_update(self, delta_t):
         res = None
-        # print(self.vl, self.vr)
-
         omega = (self.vr - self.vl) / self.wheel_space
 
         if omega == 0:
@@ -150,10 +104,6 @@ class Localizer:
             self.posx = ((self.posx - cx) * cos(omega * delta_t)) + ((self.posy - cy) * -sin(omega * delta_t)) + cx
             self.posy = ((self.posx - cx) * sin(omega * delta_t)) + ((self.posy - cy) *  cos(omega * delta_t)) + cy
             self.theta += omega * delta_t
-
-            # self.theta = (self.theta + 2 * pi) % (2 * pi)
-
-        # print(self.posx, self.posy, self.theta)
 
         pose_msg = Pose2D()
         pose_msg.x = self.posx

@@ -1,6 +1,0 @@
-<launch>
-  
-  <node pkg="path_driver" name="path_driver" type="path_driver_node.py"/>
-  <node name="record" pkg="rosbag" type="record" args="record -o $(find path_driver)/bags/ /target_tether_length /current_tether_length"/>
-
-</launch>
